@@ -67,5 +67,14 @@ def extractFunc(CM_HM):
   return SM_extract
 #print("Your secret message=",SM_extract)
 
+def safe_extract(stego_text, key_hex):
+    try:
+        hidden = extract_message(stego_text)      # your existing extractor
+        decrypted = decrypt_message(hidden, key_hex)
+        return decrypted, None
+    except Exception as e:
+        return None, "Decoding failed: wrong key or invalid hidden text."
+
+
 
  

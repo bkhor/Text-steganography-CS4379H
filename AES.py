@@ -1,43 +1,25 @@
-import binascii
-from Cryptodome.Cipher import AES
-from Cryptodome import Random
-from Cryptodome.Protocol.KDF import PBKDF2
+import os
+import hashlib
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 
-def get_private_key(password):
-    salt = b"this is a salt"
-    kdf = PBKDF2(password, salt, 64, 1000)
-    key = kdf[:32]
-    return key
+def generate_secure_key():
+    """Return a 32-byte AES key derived from SHA-256 of random bytes."""
+    random_bytes = os.urandom(32)
+    return hashlib.sha256(random_bytes).digest()  # 32 bytes
 
-def encrypt(passwrd, message):
-    msglist = []
-    key = get_private_key(passwrd)
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(key, AES.MODE_CFB, iv)
-    msg = iv + cipher.encrypt(bytes(message, "utf-8"))
-    msg = binascii.hexlify(msg)
-    for letter in str(msg):
-        msglist.append(letter)
-    msglist.remove("b")
-    msglist.remove("'")
-    msglist.remove("'")
-    encryptedMsg=""
-    for letter in msglist:
-        encryptedMsg+=letter
-    return encryptedMsg
+def encrypt_message(message, key_hex):
+    """Encrypt message with AES CBC mode."""
+    key = bytes.fromhex(key_hex)
+    cipher = AES.new(key, AES.MODE_CBC)
+    ct_bytes = cipher.encrypt(pad(message.encode(), AES.block_size))
+    return (cipher.iv + ct_bytes).hex()
 
-def decrypt(passwrd, message):
-    msglist = []
-    key = get_private_key(passwrd)
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(key, AES.MODE_CFB, iv)
-    msg = cipher.decrypt(binascii.unhexlify(bytes(message, "utf-8")))[len(iv):]
-    for letter in str(msg):
-        msglist.append(letter)
-    msglist.remove("b")
-    msglist.remove("'")
-    msglist.remove("'")
-    decMsg=""
-    for letter in msglist:
-        decMsg+=letter
-    return decMsg
+def decrypt_message(ciphertext_hex, key_hex):
+    """Decrypt message with AES CBC mode."""
+    key = bytes.fromhex(key_hex)
+    data = bytes.fromhex(ciphertext_hex)
+    iv = data[:16]
+    ct = data[16:]
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    return unpad(cipher.decrypt(ct), AES.block_size).decode()

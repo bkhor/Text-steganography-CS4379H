@@ -4,6 +4,13 @@ import math
 
 # Function to check
 # Log base 2
+
+def calculate_capacity(cover_text):
+    # Using zero-width characters → each hidden byte needs approx 8 bits
+    # This function returns maximum characters that can be hidden
+    return len(cover_text)  # simple 1 char : 1 hidden char model
+
+    
 def Log2(x):
     if x == 0:
         return False
